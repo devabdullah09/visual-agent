@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Agent - Text to Interactive Visuals</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 0;
+            min-height: 750px;
+        }
+
+        .input-panel {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 1px solid #e9ecef;
+            overflow-y: auto;
+            max-height: 750px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .input-group textarea {
+            width: 100%;
+            min-height: 220px;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .visual-type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .visual-type-btn {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .visual-type-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .visual-type-btn:hover {
+            border-color: #667eea;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .visual-output {
+            padding: 20px;
+            background: white;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+        }
+
+        .visual-container {
+            width: 100%;
+            height: 710px;
+            border: 2px dashed #e9ecef;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            background: #fafbfc;
+            position: relative;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .placeholder {
+            text-align: center;
+            color: #6c757d;
+            margin: auto;
+        }
+
+        .placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+        }
+
+        .loading-icon {
+            font-size: 3rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .visual-svg {
+            display: block;
+        }
+
+        .node {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .node:hover rect,
+        .node:hover ellipse,
+        .node:hover polygon {
+            filter: brightness(1.1);
+            stroke-width: 3;
+        }
+
+        .connection {
+            transition: all 0.2s ease;
+        }
+
+        .connection:hover {
+            stroke-width: 3;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-panel {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Visual Agent</h1>
+            <p>Transform text into interactive diagrams, flowcharts, and charts</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-panel">
+                <div class="input-group">
+                    <label for="textInput">Enter your text:</label>
+                    <textarea id="textInput" placeholder="Paste your text here..."></textarea>
+                </div>
+                
+                <div class="visual-type-selector">
+                    <button class="visual-type-btn active" data-type="auto">Auto Detect</button>
+                    <button class="visual-type-btn" data-type="flowchart">Flowchart</button>
+                    <button class="visual-type-btn" data-type="diagram">Diagram</button>
+                    <button class="visual-type-btn" data-type="chart">Chart</button>
+                </div>
+                
+                <button class="generate-btn" id="generateBtn">Generate Visual</button>
+                
+                <div id="messageContainer"></div>
+            </div>
+            
+            <div class="visual-output">
+                <div class="visual-container" id="visualContainer">
+                    <div class="placeholder">
+                        <div class="placeholder-icon">📊</div>
+                        <h3>Your visual will appear here</h3>
+                        <p>Enter text and click "Generate Visual"</p>
+                    </div>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="loading-icon">⏳</div>
+                    <p>Generating visual...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class VisualAgent {
+            constructor() {
+                this.textInput = document.getElementById('textInput');
+                this.generateBtn = document.getElementById('generateBtn');
+                this.visualContainer = document.getElementById('visualContainer');
+                this.loading = document.getElementById('loading');
+                this.messageContainer = document.getElementById('messageContainer');
+                this.selectedType = 'auto';
+                
+                this._measureCtx = document.createElement('canvas').getContext('2d');
+                
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                this.generateBtn.addEventListener('click', () => this.generateVisual());
+                
+                document.querySelectorAll('.visual-type-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.visual-type-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.selectedType = e.target.dataset.type;
+                    });
+                });
+
+                this.textInput.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        this.generateVisual();
+                    }
+                });
+            }
+
+            
+            measureTextWidth(text, font = "600 14px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif") {
+                this._measureCtx.font = font;
+                return this._measureCtx.measureText(text).width;
+            }
+
+            wrapTextByWidth(text, maxWidth, font) {
+                
+                const words = String(text).split(/\s+/);
+                const lines = [];
+                let current = '';
+                words.forEach(word => {
+                    if (word.length === 0) return;
+                    const tentative = current ? current + ' ' + word : word;
+                    if (this.measureTextWidth(tentative, font) <= maxWidth) {
+                        current = tentative;
+                    } else {
+                        if (current) lines.push(current);
+                        
+                        if (this.measureTextWidth(word, font) > maxWidth) {
+                            let chunk = '';
+                            for (let i = 0; i < word.length; i++) {
+                                const t = chunk + word[i];
+                                if (this.measureTextWidth(t, font) <= maxWidth) {
+                                    chunk = t;
+                                } else {
+                                    if (chunk) { lines.push(chunk); }
+                                    chunk = word[i];
+                                }
+                            }
+                            current = chunk;
+                        } else {
+                            current = word;
+                        }
+                    }
+                });
+                if (current) lines.push(current);
+                return lines;
+            }
+
+            computeNodeDimensions(nodeLabel, nodeType) {
+                
+                const horizontalPadding = 22;
+                const verticalPadding = 16;
+                const baseFont = "600 14px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+                const lineHeight = 18; 
+                const maxContentWidth = 260; 
+                const minWidth = nodeType === 'terminal' ? 160 : 140;
+                const minHeight = nodeType === 'terminal' ? 60 : 54;
+
+                const lines = this.wrapTextByWidth(nodeLabel, maxContentWidth, baseFont);
+                const longest = Math.max(...lines.map(l => this.measureTextWidth(l, baseFont)), 0);
+                const contentWidth = Math.max(longest, 10);
+                let width = Math.max(minWidth, Math.ceil(contentWidth + horizontalPadding * 2));
+                const height = Math.max(minHeight, lines.length * lineHeight + verticalPadding * 2);
+
+                
+                if (nodeType === 'decision') {
+                    width = Math.max(width, height + 10);
+                }
+
+                return { width, height, lines, font: baseFont, lineHeight };
+            }
+
+            showMessage(message, type = 'success') {
+                this.messageContainer.innerHTML = `<div class="${type}-message">${message}</div>`;
+                setTimeout(() => {
+                    this.messageContainer.innerHTML = '';
+                }, 5000);
+            }
+
+            showLoading() {
+                this.visualContainer.style.display = 'none';
+                this.loading.style.display = 'block';
+                this.generateBtn.disabled = true;
+            }
+
+            hideLoading() {
+                this.loading.style.display = 'none';
+                this.visualContainer.style.display = 'flex';
+                this.generateBtn.disabled = false;
+            }
+
+            redactSecrets(text) {
+                const patterns = [
+                    { regex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, replacement: '[EMAIL]' },
+                    { regex: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, replacement: '[CARD]' },
+                    { regex: /\b(?:password|pwd|secret|key|token|api[-_]?key)\s*[:=]\s*\S+/gi, replacement: 'password: [REDACTED]' },
+                    { regex: /\b(?:sk|pk)-[A-Za-z0-9]{20,}\b/g, replacement: '[SECRET]' }
+                ];
+
+                let redactedText = text;
+                patterns.forEach(pattern => {
+                    redactedText = redactedText.replace(pattern.regex, pattern.replacement);
+                });
+
+                return redactedText;
+            }
+
+            detectVisualType(text) {
+                if (this.selectedType !== 'auto') {
+                    return this.selectedType;
+                }
+
+                const lowerText = text.toLowerCase();
+                
+                
+                const hasKeyValue = /[:=]\s*\d+/.test(text);
+                const hasQuarterOrMonth = /\b(q1|q2|q3|q4|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(text);
+                if ((hasKeyValue && hasQuarterOrMonth) || (text.match(/[:=]\s*\d+/g) || []).length >= 3) {
+                    return 'chart';
+                }
+                
+                
+                const hasFlowKeywords = /\b(start|begin|end|finish|step|process)\b/.test(lowerText);
+                const hasDecision = text.includes('?');
+                const hasYesNo = /\b(yes|no)\s*:/i.test(text);
+                const hasIfThen = /\bif\b[\s\S]*\bthen\b/i.test(text);
+                
+                if (hasFlowKeywords || hasDecision || hasYesNo || hasIfThen) {
+                    return 'flowchart';
+                }
+                
+                
+                return 'diagram';
+            }
+
+            parseFlowchart(text) {
+                const nodes = [];
+                const edges = [];
+                const nodeMap = new Map();
+                let nodeIdCounter = 0;
+
+                const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+
+                const addNode = (label, type = 'process') => {
+                    if (!nodeMap.has(label)) {
+                        const node = {
+                            id: `node_${nodeIdCounter++}`,
+                            label: label,
+                            type: type
+                        };
+                        nodes.push(node);
+                        nodeMap.set(label, node);
+                        return node;
+                    }
+                    return nodeMap.get(label);
+                };
+
+                const sequentialCandidates = [];
+                let lastDecision = null; 
+                const decisionToBranches = new Map(); 
+                let lastNonDecision = null; 
+                const decisionPrevMap = new Map(); 
+
+                const findExistingByName = (raw) => {
+                    const name = raw.trim().toLowerCase();
+                    
+                    for (const key of nodeMap.keys()) {
+                        if (key.toLowerCase() === name) return key;
+                    }
+                    
+                    for (const key of nodeMap.keys()) {
+                        if (key.toLowerCase().includes(name)) return key;
+                    }
+                    return null;
+                };
+
+                lines.forEach(line => {
+                    
+                    
+
+                    
+                    const arrowParts = line.split(/\s*→\s*|\s*->\s*/);
+
+                    
+                    const hasArrow = arrowParts.length > 1;
+                    const hasBranch = /\b(yes|no)\s*:/i.test(line);
+
+                    if (!hasArrow && !hasBranch) {
+                        
+                        const stepMatch = line.match(/^step\s*\d+\s*:\s*(.+)$/i);
+                        const label = stepMatch ? stepMatch[1].trim() : line;
+                        const isTerminal = /\b(start|begin|end|finish)\b/i.test(label);
+                        addNode(label, isTerminal ? 'terminal' : 'process');
+                        sequentialCandidates.push(label);
+                        return; 
+                    }
+
+                    let currentDecision = null;
+
+                    for (let i = 0; i < arrowParts.length; i++) {
+                        let part = arrowParts[i].trim();
+                        if (!part) continue;
+
+                        
+                        const ifMatch = part.match(/^if\s+(.+?)\s+then\s+(.+?)(?:\s+else\s+(.+))?$/i);
+                        if (ifMatch) {
+                            const condition = ifMatch[1].trim();
+                            const thenAction = ifMatch[2].trim();
+                            const elseAction = ifMatch[3] ? ifMatch[3].trim() : '';
+                            const decisionLabel = condition.endsWith('?') ? condition : `${condition}?`;
+
+                            addNode(decisionLabel, 'decision');
+                            lastDecision = decisionLabel;
+                            if (!decisionToBranches.has(decisionLabel)) decisionToBranches.set(decisionLabel, new Set());
+                            if (lastNonDecision) decisionPrevMap.set(decisionLabel, lastNonDecision);
+
+                           
+                            if (thenAction) {
+                                const isTerminalThen = /\b(start|begin|end|finish)\b/i.test(thenAction);
+                                addNode(thenAction, isTerminalThen ? 'terminal' : 'process');
+                                edges.push({ from: decisionLabel, to: thenAction, label: 'Yes' });
+                                decisionToBranches.get(decisionLabel).add('Yes');
+                            }
+                            if (elseAction) {
+                                const isTerminalElse = /\b(start|begin|end|finish)\b/i.test(elseAction);
+                                addNode(elseAction, isTerminalElse ? 'terminal' : 'process');
+                                edges.push({ from: decisionLabel, to: elseAction, label: 'No' });
+                                decisionToBranches.get(decisionLabel).add('No');
+                            }
+
+                            
+                            if (i < arrowParts.length - 1) {
+                                const nextRaw = arrowParts[i + 1].trim();
+                                if (!/^(yes|no|else)\s*:/i.test(nextRaw)) {
+                                    const nextPart = nextRaw.split(/\s+(yes|no|else)\s*:/i)[0].trim();
+                                    if (thenAction && !edges.find(e => e.from === thenAction && e.to === nextPart)) {
+                                        edges.push({ from: thenAction, to: nextPart });
+                                    }
+                                    if (elseAction && !edges.find(e => e.from === elseAction && e.to === nextPart)) {
+                                        edges.push({ from: elseAction, to: nextPart });
+                                    }
+                                }
+                            }
+
+                            
+                            continue;
+                        }
+
+
+                        const yesMatch = part.match(/^yes\s*:\s*(.+?)(?=\s+no\s*:|$)/i);
+                        const noMatch = part.match(/no\s*:\s*(.+?)$/i);
+
+                        if (yesMatch || noMatch) {
+                           
+                            if (yesMatch) {
+                                const yesPath = yesMatch[1].trim();
+                                const decisionSource = currentDecision || lastDecision;
+                                if (decisionSource && yesPath) {
+                                    const isTerminal = /\b(start|begin|end|finish)\b/i.test(yesPath);
+                                    addNode(yesPath, isTerminal ? 'terminal' : 'process');
+                                    edges.push({
+                                        from: decisionSource,
+                                        to: yesPath,
+                                        label: 'Yes'
+                                    });
+                                    if (!decisionToBranches.has(decisionSource)) decisionToBranches.set(decisionSource, new Set());
+                                    decisionToBranches.get(decisionSource).add('Yes');
+                                }
+                            }
+
+                            if (noMatch) {
+                                const noPath = noMatch[1].trim();
+                                const decisionSource = currentDecision || lastDecision;
+                                if (decisionSource && noPath) {
+                                    const isTerminal = /\b(start|begin|end|finish)\b/i.test(noPath);
+                                    addNode(noPath, isTerminal ? 'terminal' : 'process');
+                                    edges.push({
+                                        from: decisionSource,
+                                        to: noPath,
+                                        label: 'No'
+                                    });
+                                    if (!decisionToBranches.has(decisionSource)) decisionToBranches.set(decisionSource, new Set());
+                                    decisionToBranches.get(decisionSource).add('No');
+                                }
+                            }
+                        } else {
+                            
+                            const isDecision = part.includes('?') || /\b(decision|check|validate|verify)\b/i.test(part);
+                            const isTerminal = /\b(start|begin|end|finish)\b/i.test(part);
+
+                            const nodeType = isDecision ? 'decision' : (isTerminal ? 'terminal' : 'process');
+                            addNode(part, nodeType);
+
+                            
+                            if (isDecision) {
+                                currentDecision = part;
+                                lastDecision = part;
+                                if (!decisionToBranches.has(part)) decisionToBranches.set(part, new Set());
+                                if (lastNonDecision) decisionPrevMap.set(part, lastNonDecision);
+                            }
+                            if (!isDecision) {
+                                lastNonDecision = part;
+                            }
+
+                            
+                            if (i < arrowParts.length - 1) {
+                                const nextPartRaw = arrowParts[i + 1].trim();
+                                if (!/^(yes|no)\s*:/i.test(nextPartRaw)) {
+                                    
+                                    const nextIf = nextPartRaw.match(/^if\s+(.+?)\s+then\s+(.+?)(?:\s+else\s+(.+))?$/i);
+                                    let target = nextPartRaw.split(/\s+(yes|no)\s*:/i)[0].trim();
+                                    if (nextIf) {
+                                        const cond = nextIf[1].trim();
+                                        target = cond.endsWith('?') ? cond : `${cond}?`;
+                                    }
+                                    if (!edges.find(e => e.from === part && e.to === target)) {
+                                        edges.push({ from: part, to: target });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                
+                if (sequentialCandidates.length > 1) {
+                    for (let i = 0; i < sequentialCandidates.length - 1; i++) {
+                        const from = sequentialCandidates[i];
+                        const to = sequentialCandidates[i + 1];
+                        if (!edges.find(e => e.from === from && e.to === to)) {
+                            edges.push({ from, to });
+                        }
+                    }
+                }
+
+                
+                lines.forEach(line => {
+                    const branchContinuation = line.match(/^(yes|no|else)\s*:\s*(.+)/i);
+                    if (branchContinuation) {
+                        const branch = branchContinuation[1].toLowerCase();
+                        const flowPath = branchContinuation[2];
+                        const pathParts = flowPath.split(/\s*→\s*|\s*->\s*/);
+
+                        for (let i = 0; i < pathParts.length; i++) {
+                            const part = pathParts[i].trim();
+                            if (!part) continue;
+
+                            const isDecision = part.includes('?') || /\b(decision|check|validate|verify)\b/i.test(part);
+                            const isTerminal = /\b(start|begin|end|finish)\b/i.test(part);
+                            const nodeType = isDecision ? 'decision' : (isTerminal ? 'terminal' : 'process');
+
+                            addNode(part, nodeType);
+
+                            if (i > 0) {
+                                const prevPart = pathParts[i - 1].trim();
+                                if (prevPart && !edges.find(e => e.from === prevPart && e.to === part)) {
+                                    edges.push({ from: prevPart, to: part });
+                                }
+                            }
+
+                            
+                            if (nodeType === 'decision') {
+                                lastDecision = part;
+                                if (!decisionToBranches.has(part)) decisionToBranches.set(part, new Set());
+                            }
+                        }
+
+                        
+                        if (lastDecision && pathParts[0]) {
+                            const firstTarget = pathParts[0].trim();
+                            const label = branch === 'yes' ? 'Yes' : 'No';
+                            if (!edges.find(e => e.from === lastDecision && e.to === firstTarget && e.label === label)) {
+                                edges.push({ from: lastDecision, to: firstTarget, label });
+                                if (!decisionToBranches.has(lastDecision)) decisionToBranches.set(lastDecision, new Set());
+                                decisionToBranches.get(lastDecision).add(label);
+                            }
+                        }
+                    }
+                });
+
+                return { nodes, edges };
+            }
+
+            parseDiagram(text) {
+                const nodes = [];
+                const edges = [];
+                const nodeSet = new Set();
+                const edgeSet = new Set();
+
+                const canon = (s) => s.trim().replace(/\s+/g, ' ');
+                const cleanEntity = (s) => canon(s).replace(/^(the|a|an)\s+/i, '');
+
+                const addNode = (label) => {
+                    const key = canon(label);
+                    if (!key) return null;
+                    if (!nodeSet.has(key)) {
+                        nodes.push({ id: `node_${nodes.length}`, label: key });
+                        nodeSet.add(key);
+                    }
+                    return key;
+                };
+
+                const addEdge = (from, to) => {
+                    const k = `${from} -> ${to}`;
+                    if (!edgeSet.has(k)) {
+                        edges.push({ from, to });
+                        edgeSet.add(k);
+                    }
+                };
+
+                
+                const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+                lines.forEach(line => {
+                    if (/[→-]>/g.test(line) || /→/.test(line) || /->/.test(line)) {
+                        const parts = line.split(/\s*→\s*|\s*->\s*/);
+                        parts.forEach((part, index) => {
+                            const a = addNode(part);
+                            if (a && index < parts.length - 1) {
+                                const b = addNode(parts[index + 1]);
+                                if (b) addEdge(a, b);
+                            }
+                        });
+                    }
+                });
+
+
+                const phrases = text
+                    .split(/[\n\.;]+|,\s*(?=[A-Z0-9])/g)
+                    .map(p => p.trim())
+                    .filter(Boolean);
+
+                const verbPattern = /(connects to|sends(?:\s+request)?\s+to|routes to|links to|queries|returns(?:\s+(?:data|response))?\s+to|sends\s+data\s+to)/i;
+
+                phrases.forEach(p => {
+                    const m = p.match(/^(.+?)\s+connects\s+to\s+(.+)$/i)
+                        || p.match(/^(.+?)\s+sends(?:\s+request)?\s+to\s+(.+)$/i)
+                        || p.match(/^(.+?)\s+routes\s+to\s+(.+)$/i)
+                        || p.match(/^(.+?)\s+links\s+to\s+(.+)$/i)
+                        || p.match(/^(.+?)\s+queries\s+(.+)$/i)
+                        || p.match(/^(.+?)\s+returns(?:\s+(?:data|response))?\s+to\s+(.+)$/i)
+                        || p.match(/^(.+?)\s+sends\s+data\s+to\s+(.+)$/i);
+
+                    if (m) {
+                        const fromRaw = cleanEntity(m[1]);
+                        const toRaw = cleanEntity(m[2]);
+                        const from = addNode(fromRaw);
+                        const to = addNode(toRaw);
+                        if (from && to) addEdge(from, to);
+                    }
+                });
+
+                return { nodes, edges };
+            }
+
+            parseChart(text) {
+                const data = [];
+                const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+                
+                lines.forEach(line => {
+                    const match = line.match(/([^:=]+)\s*[:=]\s*(\d+(?:\.\d+)?)/);
+                    if (match) {
+                        data.push({
+                            label: match[1].trim(),
+                            value: parseFloat(match[2])
+                        });
+                    }
+                });
+                
+                return data;
+            }
+
+            renderFlowchart(data) {
+                const { nodes, edges } = data;
+                if (nodes.length === 0) return;
+
+                const layout = this.calculateFlowchartLayout(nodes, edges);
+                
+                const defaultNodeWidth = 180;
+                const defaultNodeHeight = 70;
+                const horizontalSpacing = 220;
+                const verticalSpacing = 140;
+                
+                
+                const maxCol = Math.max(...Array.from(layout.values()).map(pos => pos.col));
+                const maxRow = Math.max(...Array.from(layout.values()).map(pos => pos.row));
+                const width = (maxCol + 1) * horizontalSpacing + 200;
+                const height = (maxRow + 1) * verticalSpacing + 200;
+                
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.classList.add('visual-svg');
+                svg.setAttribute('width', width);
+                svg.setAttribute('height', height);
+                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                
+                
+                const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', 'arrowhead');
+                marker.setAttribute('markerWidth', '10');
+                marker.setAttribute('markerHeight', '10');
+                marker.setAttribute('refX', '9');
+                marker.setAttribute('refY', '3');
+                marker.setAttribute('orient', 'auto');
+                
+                const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                arrow.setAttribute('points', '0 0, 10 3, 0 6');
+                arrow.setAttribute('fill', '#667eea');
+                marker.appendChild(arrow);
+                defs.appendChild(marker);
+                svg.appendChild(defs);
+                
+                const positions = new Map();
+                layout.forEach((pos, label) => {
+                    const x = 100 + pos.col * horizontalSpacing;
+                    const y = 100 + pos.row * verticalSpacing;
+                    positions.set(label, { x, y, node: pos.node });
+                });
+                
+                edges.forEach(edge => {
+                    const fromPos = positions.get(edge.from);
+                    const toPos = positions.get(edge.to);
+                    
+                    if (fromPos && toPos) {
+                        const sizeFrom = this.computeNodeDimensions(fromPos.node.label || fromPos.node.text || '', fromPos.node.type || 'process');
+                        const sizeTo = this.computeNodeDimensions(toPos.node.label || toPos.node.text || '', toPos.node.type || 'process');
+                        this.drawFlowchartEdge(svg, fromPos, toPos, edge, sizeFrom.width, sizeFrom.height, sizeTo.width, sizeTo.height);
+                    } else if (fromPos && !toPos) {
+                        const decisionLabel = fromPos.node.type === 'decision' ? fromPos.node.label : null;
+                        if (decisionLabel) {
+                            const candidates = Array.from(positions.entries())
+                                .filter(([label, p]) => p.y < fromPos.y && p.node.type !== 'decision')
+                                .sort((a, b) => Math.abs(a[1].x - fromPos.x) - Math.abs(b[1].x - fromPos.x));
+                            if (candidates.length > 0) {
+                                const toCandidate = candidates[0][1];
+                                const sizeFrom = this.computeNodeDimensions(fromPos.node.label || '', fromPos.node.type || 'process');
+                                const sizeTo = this.computeNodeDimensions(toCandidate.node.label || '', toCandidate.node.type || 'process');
+                                this.drawFlowchartEdge(svg, fromPos, toCandidate, { label: edge.label }, sizeFrom.width, sizeFrom.height, sizeTo.width, sizeTo.height);
+                            }
+                        }
+                    }
+                });
+                
+                positions.forEach(({ x, y, node }) => {
+                    const dims = this.computeNodeDimensions(node.label || node.text || '', node.type || 'process');
+                    this.drawFlowchartNode(svg, node, x, y, dims.width, dims.height, dims);
+                });
+                
+                this.visualContainer.innerHTML = '';
+                this.visualContainer.appendChild(svg);
+            }
+
+            calculateFlowchartLayout(nodes, edges) {
+                const layout = new Map();
+                const nodeMap = new Map(nodes.map(n => [n.label, n]));
+                
+                const targetNodes = new Set(edges.map(e => e.to));
+                let startNode = nodes.find(n => !targetNodes.has(n.label));
+                if (!startNode) startNode = nodes[0];
+                
+                const adjList = new Map();
+                edges.forEach(edge => {
+                    if (!adjList.has(edge.from)) adjList.set(edge.from, []);
+                    adjList.get(edge.from).push({ to: edge.to, label: edge.label });
+                });
+                
+                let row = 0;
+                const visited = new Set();
+                const queue = [{ label: startNode.label, col: 0, row: 0 }];
+                
+                while (queue.length > 0) {
+                    const { label, col, row } = queue.shift();
+                    
+                    if (visited.has(label)) continue;
+                    visited.add(label);
+                    
+                    const node = nodeMap.get(label) || { label, type: 'process' };
+                    layout.set(label, { col, row, node });
+                    
+                    const children = adjList.get(label) || [];
+                    
+                    if (node.type === 'decision' && children.length > 0) {
+                        const yesChild = children.find(c => c.label && c.label.toLowerCase() === 'yes');
+                        const noChild = children.find(c => c.label && c.label.toLowerCase() === 'no');
+                        
+                        if (yesChild && noChild) {
+                            queue.push({ label: yesChild.to, col: col + 1, row: row + 1 });
+                            queue.push({ label: noChild.to, col: col - 1, row: row + 1 });
+                        } else {
+                            children.forEach((child, idx) => {
+                                const childCol = col + (idx === 0 ? 1 : -1);
+                                queue.push({ label: child.to, col: childCol, row: row + 1 });
+                            });
+                        }
+                    } else {
+                        
+                        const startCol = col - Math.floor((children.length - 1) / 2);
+                        children.forEach((child, idx) => {
+                            queue.push({ label: child.to, col: startCol + idx, row: row + 1 });
+                        });
+                    }
+                }
+                
+                
+                const minCol = Math.min(...Array.from(layout.values()).map(pos => pos.col));
+                if (minCol < 0) {
+                    layout.forEach(pos => pos.col -= minCol);
+                }
+                
+                
+                const occupied = new Set();
+                const key = (r,c) => `${r}:${c}`;
+                Array.from(layout.entries())
+                    .sort((a,b) => a[1].row - b[1].row || a[1].col - b[1].col)
+                    .forEach(([label, pos]) => {
+                        let c = pos.col;
+                        while (occupied.has(key(pos.row, c))) c += 1;
+                        pos.col = c;
+                        occupied.add(key(pos.row, pos.col));
+                    });
+                
+                return layout;
+            }
+
+            drawFlowchartNode(svg, node, x, y, width, height, dims) {
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.classList.add('node');
+                
+                if (node.type === 'decision') {
+                    
+                    const points = `${x + width/2},${y} ${x + width},${y + height/2} ${x + width/2},${y + height} ${x},${y + height/2}`;
+                    const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    diamond.setAttribute('points', points);
+                    diamond.setAttribute('fill', '#e74c3c');
+                    diamond.setAttribute('stroke', '#c0392b');
+                    diamond.setAttribute('stroke-width', '2.5');
+                    g.appendChild(diamond);
+                    
+                    
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', x + width / 2);
+                    text.setAttribute('y', y + height / 2 - ((dims.lines.length - 1) * dims.lineHeight) / 2);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('fill', 'white');
+                    text.setAttribute('font-size', '14');
+                    text.setAttribute('font-weight', '600');
+                    dims.lines.forEach((line, idx) => {
+                        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                        tspan.setAttribute('x', x + width / 2);
+                        if (idx > 0) tspan.setAttribute('dy', dims.lineHeight);
+                        tspan.textContent = line;
+                        text.appendChild(tspan);
+                    });
+                    g.appendChild(text);
+                } else if (node.type === 'terminal') {
+                    
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x);
+                    rect.setAttribute('y', y);
+                    rect.setAttribute('width', width);
+                    rect.setAttribute('height', height);
+                    rect.setAttribute('rx', 35);
+                    rect.setAttribute('fill', '#27ae60');
+                    rect.setAttribute('stroke', '#229954');
+                    rect.setAttribute('stroke-width', '2.5');
+                    g.appendChild(rect);
+                    
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', x + width / 2);
+                    text.setAttribute('y', y + height / 2 - ((dims.lines.length - 1) * dims.lineHeight) / 2);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('fill', 'white');
+                    text.setAttribute('font-size', '15');
+                    text.setAttribute('font-weight', '600');
+                    dims.lines.forEach((line, idx) => {
+                        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                        tspan.setAttribute('x', x + width / 2);
+                        if (idx > 0) tspan.setAttribute('dy', dims.lineHeight);
+                        tspan.textContent = line;
+                        text.appendChild(tspan);
+                    });
+                    g.appendChild(text);
+                } else {
+
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x);
+                    rect.setAttribute('y', y);
+                    rect.setAttribute('width', width);
+                    rect.setAttribute('height', height);
+                    rect.setAttribute('rx', 10);
+                    rect.setAttribute('fill', '#667eea');
+                    rect.setAttribute('stroke', '#5568d3');
+                    rect.setAttribute('stroke-width', '2.5');
+                    g.appendChild(rect);
+                    
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', x + width / 2);
+                    text.setAttribute('y', y + height / 2 - ((dims.lines.length - 1) * dims.lineHeight) / 2);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('fill', 'white');
+                    text.setAttribute('font-size', '14');
+                    text.setAttribute('font-weight', '600');
+                    dims.lines.forEach((line, idx) => {
+                        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                        tspan.setAttribute('x', x + width / 2);
+                        if (idx > 0) tspan.setAttribute('dy', dims.lineHeight);
+                        tspan.textContent = line;
+                        text.appendChild(tspan);
+                    });
+                    g.appendChild(text);
+                }
+                
+                svg.appendChild(g);
+            }
+
+            drawFlowchartEdge(svg, fromPos, toPos, edge, fromW, fromH, toW, toH) {
+                const fromX = fromPos.x + fromW / 2;
+                const fromY = fromPos.y + fromH;
+                const toX = toPos.x + toW / 2;
+                const toY = toPos.y;
+                
+                
+                let startX = fromX;
+                let startY = fromY;
+                let endX = toX;
+                let endY = toY;
+                
+                
+                if (fromPos.node.type === 'decision') {
+                    if (toPos.x > fromPos.x) {
+                        
+                        startX = fromPos.x + fromW;
+                        startY = fromPos.y + fromH / 2;
+                        endX = toPos.x;
+                        endY = toPos.y + toH / 2;
+                    } else if (toPos.x < fromPos.x) {
+                       
+                        startX = fromPos.x;
+                        startY = fromPos.y + fromH / 2;
+                        endX = toPos.x + toW;
+                        endY = toPos.y + toH / 2;
+                    }
+                }
+                
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                let d;
+                
+                if (Math.abs(toPos.x - fromPos.x) > Math.max(fromW, toW)) {
+                   
+                    const midY = (startY + endY) / 2;
+                    d = `M ${startX} ${startY} L ${startX} ${midY} L ${endX} ${midY} L ${endX} ${endY}`;
+                } else {
+                    
+                    d = `M ${startX} ${startY} L ${endX} ${endY}`;
+                }
+                
+                path.setAttribute('d', d);
+                path.setAttribute('stroke', '#667eea');
+                path.setAttribute('stroke-width', '2.5');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('marker-end', 'url(#arrowhead)');
+                path.classList.add('connection');
+                svg.appendChild(path);
+                
+               
+                if (edge.label) {
+                    const labelX = (startX + endX) / 2 + 15;
+                    const labelY = (startY + endY) / 2;
+                    
+                    const labelBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    labelBg.setAttribute('x', labelX - 20);
+                    labelBg.setAttribute('y', labelY - 12);
+                    labelBg.setAttribute('width', 40);
+                    labelBg.setAttribute('height', 24);
+                    labelBg.setAttribute('fill', 'white');
+                    labelBg.setAttribute('stroke', '#667eea');
+                    labelBg.setAttribute('stroke-width', '1.5');
+                    labelBg.setAttribute('rx', 4);
+                    svg.appendChild(labelBg);
+                    
+                    const labelText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    labelText.setAttribute('x', labelX);
+                    labelText.setAttribute('y', labelY + 4);
+                    labelText.setAttribute('text-anchor', 'middle');
+                    labelText.setAttribute('font-size', '12');
+                    labelText.setAttribute('font-weight', 'bold');
+                    labelText.setAttribute('fill', '#667eea');
+                    labelText.textContent = edge.label;
+                    svg.appendChild(labelText);
+                }
+            }
+
+            renderDiagram(data) {
+                const { nodes, edges } = data;
+                if (nodes.length === 0) return;
+
+                const width = 1000;
+                const height = 800;
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.classList.add('visual-svg');
+                svg.setAttribute('width', width);
+                svg.setAttribute('height', height);
+                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                
+                const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', 'arrowhead-diagram');
+                marker.setAttribute('markerWidth', '10');
+                marker.setAttribute('markerHeight', '10');
+                marker.setAttribute('refX', '9');
+                marker.setAttribute('refY', '3');
+                marker.setAttribute('orient', 'auto');
+                
+                const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                arrow.setAttribute('points', '0 0, 10 3, 0 6');
+                arrow.setAttribute('fill', '#667eea');
+                marker.appendChild(arrow);
+                defs.appendChild(marker);
+                svg.appendChild(defs);
+                
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) / 2.5;
+                const nodeWidth = 160;
+                const nodeHeight = 80;
+                
+                const positions = new Map();
+                const canon = (s) => s.trim().replace(/\s+/g, ' ');
+                
+                nodes.forEach((node, index) => {
+                    const angle = (2 * Math.PI * index) / nodes.length - Math.PI / 2;
+                    const x = centerX + radius * Math.cos(angle) - nodeWidth / 2;
+                    const y = centerY + radius * Math.sin(angle) - nodeHeight / 2;
+                    positions.set(canon(node.label), { x, y, label: canon(node.label) });
+                });
+                
+                const borderPoint = (rect, w, h, targetX, targetY) => {
+                    const cx = rect.x + w / 2;
+                    const cy = rect.y + h / 2;
+                    const dx = targetX - cx;
+                    const dy = targetY - cy;
+                    if (dx === 0 && dy === 0) return { x: cx, y: cy };
+                    const absDx = Math.abs(dx);
+                    const absDy = Math.abs(dy);
+                    let scale;
+                    if (absDx / (w / 2) > absDy / (h / 2)) {
+                        scale = (w / 2) / absDx;
+                    } else {
+                        scale = (h / 2) / absDy;
+                    }
+                    return { x: cx + dx * scale, y: cy + dy * scale };
+                };
+
+                edges.forEach(edge => {
+                    const fromPos = positions.get(canon(edge.from));
+                    const toPos = positions.get(canon(edge.to));
+                    
+                    if (fromPos && toPos) {
+                        
+                        const start = borderPoint(fromPos, nodeWidth, nodeHeight, toPos.x + nodeWidth / 2, toPos.y + nodeHeight / 2);
+                        const end = borderPoint(toPos, nodeWidth, nodeHeight, fromPos.x + nodeWidth / 2, fromPos.y + nodeHeight / 2);
+                        
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', start.x);
+                        line.setAttribute('y1', start.y);
+                        line.setAttribute('x2', end.x);
+                        line.setAttribute('y2', end.y);
+                        line.setAttribute('stroke', '#667eea');
+                        line.setAttribute('stroke-width', '2.5');
+                        line.setAttribute('marker-end', 'url(#arrowhead-diagram)');
+                        line.classList.add('connection');
+                        svg.appendChild(line);
+                    }
+                });
+                
+                positions.forEach((pos, label) => {
+                    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    g.classList.add('node');
+                    
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', pos.x);
+                    rect.setAttribute('y', pos.y);
+                    rect.setAttribute('width', nodeWidth);
+                    rect.setAttribute('height', nodeHeight);
+                    rect.setAttribute('rx', 12);
+                    rect.setAttribute('fill', '#667eea');
+                    rect.setAttribute('stroke', '#5568d3');
+                    rect.setAttribute('stroke-width', '2.5');
+                    g.appendChild(rect);
+                    
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', pos.x + nodeWidth / 2);
+                    text.setAttribute('y', pos.y + nodeHeight / 2);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('dominant-baseline', 'middle');
+                    text.setAttribute('fill', 'white');
+                    text.setAttribute('font-size', '14');
+                    text.setAttribute('font-weight', '600');
+                    
+                    if (label.length > 18) {
+                        const words = label.split(' ');
+                        const mid = Math.ceil(words.length / 2);
+                        const line1 = words.slice(0, mid).join(' ');
+                        const line2 = words.slice(mid).join(' ');
+                        
+                        const tspan1 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                        tspan1.setAttribute('x', pos.x + nodeWidth / 2);
+                        tspan1.setAttribute('dy', '-0.6em');
+                        tspan1.textContent = line1.substring(0, 14);
+                        
+                        const tspan2 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                        tspan2.setAttribute('x', pos.x + nodeWidth / 2);
+                        tspan2.setAttribute('dy', '1.2em');
+                        tspan2.textContent = line2.substring(0, 14);
+                        
+                        text.appendChild(tspan1);
+                        text.appendChild(tspan2);
+                    } else {
+                        text.textContent = label;
+                    }
+                    
+                    g.appendChild(text);
+                    svg.appendChild(g);
+                });
+                
+                this.visualContainer.innerHTML = '';
+                this.visualContainer.appendChild(svg);
+            }
+
+            renderChart(data) {
+                if (data.length === 0) return;
+
+                const width = 1000;
+                const height = 700;
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.classList.add('visual-svg');
+                svg.setAttribute('width', width);
+                svg.setAttribute('height', height);
+                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                
+                const padding = 100;
+                const chartWidth = width - 2 * padding;
+                const chartHeight = height - 2 * padding;
+                
+                const maxValue = Math.max(...data.map(d => d.value));
+                const barWidth = chartWidth / data.length * 0.7;
+                const barSpacing = chartWidth / data.length * 0.3;
+                
+
+                const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                xAxis.setAttribute('x1', padding);
+                xAxis.setAttribute('y1', height - padding);
+                xAxis.setAttribute('x2', width - padding);
+                xAxis.setAttribute('y2', height - padding);
+                xAxis.setAttribute('stroke', '#2c3e50');
+                xAxis.setAttribute('stroke-width', '3');
+                svg.appendChild(xAxis);
+                
+                const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                yAxis.setAttribute('x1', padding);
+                yAxis.setAttribute('y1', padding);
+                yAxis.setAttribute('x2', padding);
+                yAxis.setAttribute('y2', height - padding);
+                yAxis.setAttribute('stroke', '#2c3e50');
+                yAxis.setAttribute('stroke-width', '3');
+                svg.appendChild(yAxis);
+                
+                
+                data.forEach((item, index) => {
+                    const barHeight = (item.value / maxValue) * chartHeight;
+                    const x = padding + index * (barWidth + barSpacing) + barSpacing / 2;
+                    const y = height - padding - barHeight;
+                    
+                    const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    bar.setAttribute('x', x);
+                    bar.setAttribute('y', y);
+                    bar.setAttribute('width', barWidth);
+                    bar.setAttribute('height', barHeight);
+                    bar.setAttribute('fill', '#667eea');
+                    bar.setAttribute('stroke', '#5568d3');
+                    bar.setAttribute('stroke-width', '2');
+                    bar.setAttribute('rx', 6);
+                    bar.classList.add('bar');
+                    svg.appendChild(bar);
+                    
+                    const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    xLabel.setAttribute('x', x + barWidth / 2);
+                    xLabel.setAttribute('y', height - padding + 30);
+                    xLabel.setAttribute('text-anchor', 'middle');
+                    xLabel.setAttribute('font-size', '14');
+                    xLabel.setAttribute('font-weight', '600');
+                    xLabel.setAttribute('fill', '#2c3e50');
+                    xLabel.textContent = item.label;
+                    svg.appendChild(xLabel);
+                    
+                    const valueLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    valueLabel.setAttribute('x', x + barWidth / 2);
+                    valueLabel.setAttribute('y', y - 10);
+                    valueLabel.setAttribute('text-anchor', 'middle');
+                    valueLabel.setAttribute('font-size', '14');
+                    valueLabel.setAttribute('font-weight', 'bold');
+                    valueLabel.setAttribute('fill', '#2c3e50');
+                    valueLabel.textContent = item.value.toLocaleString();
+                    svg.appendChild(valueLabel);
+                });
+                
+                this.visualContainer.innerHTML = '';
+                this.visualContainer.appendChild(svg);
+            }
+
+            async generateVisual() {
+                const text = this.textInput.value.trim();
+                if (!text) {
+                    this.showMessage('Please enter some text to convert to a visual.', 'error');
+                    return;
+                }
+
+                this.showLoading();
+
+                try {
+                    const redactedText = this.redactSecrets(text);
+                    const visualType = this.detectVisualType(redactedText);
+                    
+                    let parsedData;
+                    switch (visualType) {
+                        case 'flowchart':
+                            parsedData = this.parseFlowchart(redactedText);
+                            break;
+                        case 'diagram':
+                            parsedData = this.parseDiagram(redactedText);
+                            break;
+                        case 'chart':
+                            parsedData = this.parseChart(redactedText);
+                            break;
+                    }
+
+                setTimeout(() => {
+                    try {
+                        switch (visualType) {
+                            case 'flowchart':
+                                this.renderFlowchart(parsedData);
+                                break;
+                            case 'diagram':
+                                this.renderDiagram(parsedData);
+                                break;
+                            case 'chart':
+                                this.renderChart(parsedData);
+                                break;
+                        }
+                        this.showMessage(`Generated ${visualType} successfully!`, 'success');
+                    } catch (err) {
+                        console.error('Render error:', err);
+                        this.showMessage('Error generating visual. Please check your input format.', 'error');
+                    } finally {
+                        this.hideLoading();
+                    }
+                }, 500);
+
+                } catch (error) {
+                    this.hideLoading();
+                    this.showMessage('Error generating visual. Please try again.', 'error');
+                    console.error('Error:', error);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new VisualAgent();
+        });
+    </script>
+</body>
+</html>
