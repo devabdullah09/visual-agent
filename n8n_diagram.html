@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Agent - Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .visual-container {
+            padding: 20px;
+            background: white;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 600px;
+            overflow: auto;
+        }
+        
+        .visual-svg {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .node {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .node:hover rect,
+        .node:hover ellipse,
+        .node:hover polygon {
+            filter: brightness(1.1);
+            stroke-width: 3;
+        }
+        
+        .connection {
+            transition: all 0.2s ease;
+        }
+        
+        .connection:hover {
+            stroke-width: 3;
+        }
+        
+        .bar:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Visual Agent</h1>
+            <p>Generated Diagram</p>
+        </div>
+        
+        <div class="visual-container">
+            <svg width="1000" height="800" viewBox="0 0 1000 800" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <marker id="arrowhead-diagram" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                <polygon points="0 0, 10 3, 0 6" fill="#667eea"/>
+            </marker>
+        </defs>
+        
+                    <line x1="569.282032302755" y1="120.0" x2="707.8460969082653" y2="200.0" 
+                          stroke="#667eea" stroke-width="2.5" marker-end="url(#arrowhead-diagram)"/>
+                    
+                    <line x1="777.1281292110203" y1="280.0" x2="777.1281292110205" y2="520.0" 
+                          stroke="#667eea" stroke-width="2.5" marker-end="url(#arrowhead-diagram)"/>
+                    
+                    <line x1="754.0341184434353" y1="280.0" x2="523.094010767585" y2="680.0" 
+                          stroke="#667eea" stroke-width="2.5" marker-end="url(#arrowhead-diagram)"/>
+                    
+                    <line x1="697.1281292110205" y1="560.0" x2="302.87187078897966" y2="560.0000000000001" 
+                          stroke="#667eea" stroke-width="2.5" marker-end="url(#arrowhead-diagram)"/>
+                    
+                    <line x1="476.905989232415" y1="680.0" x2="245.96588155656468" y2="280.0" 
+                          stroke="#667eea" stroke-width="2.5" marker-end="url(#arrowhead-diagram)"/>
+                    
+            <g class="node">
+                <rect x="420.0" y="40.0" width="160" height="80" 
+                      rx="12" fill="#667eea" stroke="#5568d3" stroke-width="2.5"/>
+                <text x="500.0" y="80.0" 
+                      text-anchor="middle" dominant-baseline="middle" fill="white" 
+                      font-size="14" font-weight="600">Frontend Application</text>
+            </g>
+            
+            <g class="node">
+                <rect x="697.1281292110203" y="200.0" width="160" height="80" 
+                      rx="12" fill="#667eea" stroke="#5568d3" stroke-width="2.5"/>
+                <text x="777.1281292110203" y="240.0" 
+                      text-anchor="middle" dominant-baseline="middle" fill="white" 
+                      font-size="14" font-weight="600">API Gateway</text>
+            </g>
+            
+            <g class="node">
+                <rect x="697.1281292110205" y="520.0" width="160" height="80" 
+                      rx="12" fill="#667eea" stroke="#5568d3" stroke-width="2.5"/>
+                <text x="777.1281292110205" y="560.0" 
+                      text-anchor="middle" dominant-baseline="middle" fill="white" 
+                      font-size="14" font-weight="600">Authentication Service</text>
+            </g>
+            
+            <g class="node">
+                <rect x="420.0" y="680.0" width="160" height="80" 
+                      rx="12" fill="#667eea" stroke="#5568d3" stroke-width="2.5"/>
+                <text x="500.0" y="720.0" 
+                      text-anchor="middle" dominant-baseline="middle" fill="white" 
+                      font-size="14" font-weight="600">Product Service</text>
+            </g>
+            
+            <g class="node">
+                <rect x="142.87187078897966" y="520.0000000000001" width="160" height="80" 
+                      rx="12" fill="#667eea" stroke="#5568d3" stroke-width="2.5"/>
+                <text x="222.87187078897966" y="560.0000000000001" 
+                      text-anchor="middle" dominant-baseline="middle" fill="white" 
+                      font-size="14" font-weight="600">User Database</text>
+            </g>
+            
+            <g class="node">
+                <rect x="142.87187078897966" y="199.99999999999997" width="160" height="80" 
+                      rx="12" fill="#667eea" stroke="#5568d3" stroke-width="2.5"/>
+                <text x="222.87187078897966" y="239.99999999999997" 
+                      text-anchor="middle" dominant-baseline="middle" fill="white" 
+                      font-size="14" font-weight="600">Product Database</text>
+            </g>
+            </svg>
+        </div>
+    </div>
+</body>
+</html>
+        

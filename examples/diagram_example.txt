@@ -1,0 +1,6 @@
+Frontend Application connects to API Gateway
+API Gateway routes to Authentication Service
+API Gateway routes to Product Service
+Authentication Service queries User Database
+Product Service queries Product Database
+API Gateway sends response to Frontend

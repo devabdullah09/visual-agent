@@ -1,0 +1,10 @@
+Start
+User visits website
+Check if user is logged in?
+Yes: Show dashboard
+No: Show login page
+User enters credentials
+Validate credentials?
+Yes: Redirect to dashboard
+No: Show error message
+End

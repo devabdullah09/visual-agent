@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Agent - Chart</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .visual-container {
+            padding: 20px;
+            background: white;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 600px;
+            overflow: auto;
+        }
+        
+        .visual-svg {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .node {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .node:hover rect,
+        .node:hover ellipse,
+        .node:hover polygon {
+            filter: brightness(1.1);
+            stroke-width: 3;
+        }
+        
+        .connection {
+            transition: all 0.2s ease;
+        }
+        
+        .connection:hover {
+            stroke-width: 3;
+        }
+        
+        .bar:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Visual Agent</h1>
+            <p>Generated Chart</p>
+        </div>
+        
+        <div class="visual-container">
+            <svg width="1000" height="700" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg">
+        <line x1="100" y1="600" x2="900" y2="600" 
+              stroke="#2c3e50" stroke-width="3"/>
+        <line x1="100" y1="100" x2="100" y2="600" 
+              stroke="#2c3e50" stroke-width="3"/>
+        
+            <rect x="130.0" y="350.0" width="140.0" height="250.0" 
+                  fill="#667eea" stroke="#5568d3" stroke-width="2" rx="6" class="bar"/>
+            <text x="200.0" y="630" 
+                  text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">Q1</text>
+            <text x="200.0" y="340.0" 
+                  text-anchor="middle" font-size="14" font-weight="bold" fill="#2c3e50">1,000</text>
+            
+            <rect x="330.0" y="225.0" width="140.0" height="375.0" 
+                  fill="#667eea" stroke="#5568d3" stroke-width="2" rx="6" class="bar"/>
+            <text x="400.0" y="630" 
+                  text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">Q2</text>
+            <text x="400.0" y="215.0" 
+                  text-anchor="middle" font-size="14" font-weight="bold" fill="#2c3e50">1,500</text>
+            
+            <rect x="530.0" y="100.0" width="140.0" height="500.0" 
+                  fill="#667eea" stroke="#5568d3" stroke-width="2" rx="6" class="bar"/>
+            <text x="600.0" y="630" 
+                  text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">Q3</text>
+            <text x="600.0" y="90.0" 
+                  text-anchor="middle" font-size="14" font-weight="bold" fill="#2c3e50">2,000</text>
+            
+            <rect x="730.0" y="150.0" width="140.0" height="450.0" 
+                  fill="#667eea" stroke="#5568d3" stroke-width="2" rx="6" class="bar"/>
+            <text x="800.0" y="630" 
+                  text-anchor="middle" font-size="14" font-weight="600" fill="#2c3e50">Q4</text>
+            <text x="800.0" y="140.0" 
+                  text-anchor="middle" font-size="14" font-weight="bold" fill="#2c3e50">1,800</text>
+            </svg>
+        </div>
+    </div>
+</body>
+</html>
+        
